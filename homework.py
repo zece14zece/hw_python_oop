@@ -16,27 +16,24 @@ class Calculator:
     def __init__(self, limit):
         self.limit = limit
         self.records = []
-        self.today = dt.date.today()
-        self.week_ago = self.today - dt.timedelta(days=7)
 
     def add_record(self, record):
         self.records.append(record)
 
     def get_today_stats(self):
-        today_stats = []
-        for record in self.records:
-            if record.date == self.today:
-                today_stats.append(record.amount)
-        return sum(today_stats)
+        today = dt.date.today()
+        today_stats = sum(record.amount for record in self.records
+                          if record.date == today)
+        return today_stats
 
     def get_week_stats(self):
-        week_stats = []
-        for record in self.records:
-            if self.week_ago <= record.date <= self.today:
-                week_stats.append(record.amount)
-        return sum(week_stats)
+        today = dt.date.today()
+        week_ago = today - dt.timedelta(days=7)
+        week_stats = sum(record.amount for record in self.records
+                         if week_ago <= record.date <= today)
+        return week_stats
 
-    def get_cash_limit(self):
+    def get_limit(self):
         balance = self.limit - self.get_today_stats()
         return balance
 
@@ -44,9 +41,9 @@ class Calculator:
 class CaloriesCalculator(Calculator):
 
     def get_calories_remained(self):
-        calories_remained = self.get_cash_limit()
+        calories_remained = self.get_limit()
         if calories_remained > 0:
-            message = (f'Сегодня можно съесть что-нибудь ещё, но с общей '
+            message = ('Сегодня можно съесть что-нибудь ещё, но с общей '
                        f'калорийностью не более {calories_remained} кКал')
         else:
             message = 'Хватит есть!'
@@ -62,7 +59,7 @@ class CashCalculator(Calculator):
         currencies = {'usd': ('USD', self.USD_RATE),
                       'eur': ('Euro', self.EURO_RATE),
                       'rub': ('руб', self.RUB_RATE)}
-        cash_remained = self.get_cash_limit()
+        cash_remained = self.get_limit()
         if currency not in currencies:
             return f'Валюта {currency} отсуствует'
         if cash_remained == 0:
@@ -76,19 +73,3 @@ class CashCalculator(Calculator):
             message = (f'Денег нет, держись: твой долг - {cash_remained} '
                        f'{name}')
         return message
-
-
-cash_calculator = CashCalculator(1000)
-
-# дата в параметрах не указана,
-# так что по умолчанию к записи
-# должна автоматически добавиться сегодняшняя дата
-cash_calculator.add_record(Record(amount=145, comment='кофе'))
-# и к этой записи тоже дата должна добавиться автоматически
-cash_calculator.add_record(Record(amount=300, comment='Серёге за обед'))
-# а тут пользователь указал дату, сохраняем её
-cash_calculator.add_record(Record(amount=3000,
-                                  comment='бар в Танин др',
-                                  date='08.11.2019'))
-
-print(cash_calculator.get_today_cash_remained('rub'))
