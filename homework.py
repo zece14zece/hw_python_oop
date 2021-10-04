@@ -5,11 +5,10 @@ class Record:
     def __init__(self, amount, comment, date=None):
         self.amount = amount
         self.comment = comment
-        self.date = date
-        if date is None:
-            self.date = dt.date.today()
-        else:
+        if date is not None:
             self.date = dt.datetime.strptime(date, '%d.%m.%Y').date()
+        else:
+            self.date = dt.date.today()
 
 
 class Calculator:
@@ -33,7 +32,7 @@ class Calculator:
                          if week_ago <= record.date <= today)
         return week_stats
 
-    def get_limit(self):
+    def get_today_limit(self):
         balance = self.limit - self.get_today_stats()
         return balance
 
@@ -41,7 +40,7 @@ class Calculator:
 class CaloriesCalculator(Calculator):
 
     def get_calories_remained(self):
-        calories_remained = self.get_limit()
+        calories_remained = self.get_today_limit()
         if calories_remained > 0:
             message = ('Сегодня можно съесть что-нибудь ещё, но с общей '
                        f'калорийностью не более {calories_remained} кКал')
@@ -59,13 +58,13 @@ class CashCalculator(Calculator):
         currencies = {'usd': ('USD', self.USD_RATE),
                       'eur': ('Euro', self.EURO_RATE),
                       'rub': ('руб', self.RUB_RATE)}
-        cash_remained = self.get_limit()
+        cash_remained = self.get_today_limit()
         if currency not in currencies:
             return f'Валюта {currency} отсуствует'
         if cash_remained == 0:
             return 'Денег нет, держись'
-        name, valyuta = currencies[currency]
-        cash_remained = round(cash_remained / valyuta, 2)
+        name, rate = currencies[currency]
+        cash_remained = round(cash_remained / rate, 2)
         if cash_remained > 0:
             message = f'На сегодня осталось {cash_remained} {name}'
         else:
